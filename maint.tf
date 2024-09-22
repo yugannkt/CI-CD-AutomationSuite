@@ -22,17 +22,23 @@ module "sonarqube_ec2" {
   app_port      = var.sonarqube_app_port
 }
 
+# Install Jenkins
 module "Jenkins" {
-  source              = "./jenkins"
+  source                 = "./jenkins"
   jenkins_ec2_public_ip = module.jenkins_ec2.ec2_public_ip
 }
 
 # Install SonarQube
 module "SonarQube" {
-  source               = "./sonarqube"
-  ec2_public_ip       = module.sonarqube_ec2.ec2_public_ip
+  source           = "./sonarqube"
+  ec2_public_ip    = module.sonarqube_ec2.ec2_public_ip
 }
 
+# Write inventory file for Ansible
+resource "local_file" "inventory" {
+  content  = "[Jenkins]\n${module.jenkins_ec2.ec2_public_ip} ansible_user=ec2-user\n\n[Sonarqube]\n${module.sonarqube_ec2.ec2_public_ip} ansible_user=ec2-user\n"
+  filename = "inventory.ini"
+}
 
 # Output the public IPs
 output "jenkins_ec2_public_ip" {
