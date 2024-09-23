@@ -1,5 +1,5 @@
 resource "aws_security_group" "ec2_security_group" {
-  name        = "${var.instance_name}-SG"
+  name        = "${var.instance_name}-SSSG"
   description = "Allow inbound traffic for ${var.instance_name} instance"
 
   ingress {

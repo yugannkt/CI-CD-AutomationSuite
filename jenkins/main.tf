@@ -30,5 +30,5 @@ resource "docker_container" "jenkins" {
     external = var.jenkins_ports["50000"]
   }
 
-  restart = "always"
+ 
 }

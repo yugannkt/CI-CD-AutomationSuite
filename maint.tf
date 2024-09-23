@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    ansible = {
+      version = "~> 1.3.0"
+      source  = "ansible/ansible"
+    }
+  }
+}
+
 provider "aws" {
   region = "us-east-1"  # Change this to your preferred region
 }
@@ -37,7 +46,20 @@ module "SonarQube" {
 # Write inventory file for Ansible
 resource "local_file" "inventory" {
   content  = "[Jenkins]\n${module.jenkins_ec2.ec2_public_ip} ansible_user=ec2-user\n\n[Sonarqube]\n${module.sonarqube_ec2.ec2_public_ip} ansible_user=ec2-user\n"
-  filename = "inventory.ini"
+  filename = "${path.module}/ansible_script/inventory.ini"
+}
+
+# Run Ansible playbook for SonarQube setup
+resource "ansible_playbook" "sonarqube_setup" {
+  name     = "SonarQube Setup"
+  playbook = "./ansible_script/sonarqube_setup.yml"
+
+  args = [
+    "-i", "${local_file.inventory.filename}",  # Use the inventory file
+    "--extra-vars", "jenkins_public_ip=${module.jenkins_ec2.ec2_public_ip}"  # Pass Jenkins IP as extra var
+  ]
+
+  depends_on = [module.sonarqube_ec2]  # Ensure EC2 is created before running the playbook
 }
 
 # Output the public IPs

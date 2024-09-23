@@ -1,0 +1,57 @@
+---
+- name: Configure Jenkins (unlock and create admin user)
+  hosts: Jenkins
+  become: yes
+  vars:
+    ansible_ssh_private_key_file: "/path/to/your-key.pem"  # Path to your .pem key
+    jenkins_admin_username: "admin"
+    jenkins_admin_password: "secure_password"  # Set your admin password
+    jenkins_admin_fullname: "Admin User"
+    jenkins_admin_email: "admin@example.com"
+    jenkins_plugins:
+      - git
+      - workflow-aggregator
+      - sonar
+      - sonar-quality-gates
+  tasks:
+
+    - name: Retrieve Jenkins initial admin password
+      slurp:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_initial_password
+
+    - name: Decode and display Jenkins initial admin password
+      debug:
+        msg: "Jenkins initial admin password: {{ jenkins_initial_password.content | b64decode }}"
+
+    - name: Download Jenkins CLI
+      get_url:
+        url: "http://{{ inventory_hostname }}:8080/jnlpJars/jenkins-cli.jar"
+        dest: "/tmp/jenkins-cli.jar"
+
+    - name: Wait for Jenkins service to be available
+      uri:
+        url: "http://{{ inventory_hostname }}:8080/login"
+        status_code: 200
+      register: result
+      retries: 10
+      delay: 30
+      until: result.status == 200
+
+    - name: Create Jenkins admin user
+      shell: |
+        java -jar /tmp/jenkins-cli.jar -s http://{{ inventory_hostname }}:8080/ \
+        -auth admin:{{ jenkins_initial_password.content | b64decode }} groovy = \
+        'jenkins.model.Jenkins.instance.securityRealm.createAccount("{{ jenkins_admin_username }}", "{{ jenkins_admin_password }}")'
+
+    - name: Install Jenkins plugins
+      shell: |
+        java -jar /tmp/jenkins-cli.jar -s http://{{ inventory_hostname }}:8080/ \
+        -auth {{ jenkins_admin_username }}:{{ jenkins_admin_password }} install-plugin {{ item }}
+      loop: "{{ jenkins_plugins }}"
+
+  handlers:
+    - name: Restart Jenkins
+      service:
+        name: jenkins
+        state: restarted
