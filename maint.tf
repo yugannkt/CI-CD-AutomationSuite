@@ -49,18 +49,18 @@ resource "local_file" "inventory" {
   filename = "${path.module}/ansible_script/inventory.ini"
 }
 
-# Run Ansible playbook for SonarQube setup
-resource "ansible_playbook" "sonarqube_setup" {
-  name     = "SonarQube Setup"
-  playbook = "./ansible_script/sonarqube_setup.yml"
+# # Run Ansible playbook for SonarQube setup
+# resource "ansible_playbook" "sonarqube_setup" {
+#   name     = "SonarQube Setup"
+#   playbook = "./ansible_script/sonarqube_setup.yml"
 
-  args = [
-    "-i", "${local_file.inventory.filename}",  # Use the inventory file
-    "--extra-vars", "jenkins_public_ip=${module.jenkins_ec2.ec2_public_ip}"  # Pass Jenkins IP as extra var
-  ]
+#   args = [
+#     "-i", "${local_file.inventory.filename}",  # Use the inventory file
+#     "--extra-vars", "jenkins_public_ip=${module.jenkins_ec2.ec2_public_ip}"  # Pass Jenkins IP as extra var
+#   ]
 
-  depends_on = [module.sonarqube_ec2]  # Ensure EC2 is created before running the playbook
-}
+#   depends_on = [module.sonarqube_ec2]  # Ensure EC2 is created before running the playbook
+# }
 
 # Output the public IPs
 output "jenkins_ec2_public_ip" {

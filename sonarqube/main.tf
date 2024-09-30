@@ -34,4 +34,5 @@ resource "docker_container" "sonarqube" {
   }
 
   restart = "always"
+  
 }

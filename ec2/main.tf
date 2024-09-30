@@ -1,10 +1,17 @@
 resource "aws_security_group" "ec2_security_group" {
-  name        = "${var.instance_name}-SSSG"
+  name        = "${var.instance_name}-SSGGGGGGG"
   description = "Allow inbound traffic for ${var.instance_name} instance"
 
   ingress {
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow SSH from anywhere (restrict in production)
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # Allow SSH from anywhere (restrict in production)
   }
@@ -57,3 +64,4 @@ output "ec2_public_ip" {
   description = "Public IP of the EC2 instance."
   value       = aws_instance.ec2_instance.public_ip
 }
+

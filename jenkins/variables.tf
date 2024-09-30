@@ -22,4 +22,14 @@ variable "jenkins_ports" {
     "8080"  = 8080,
     "50000" = 50000
   }
+  
 }
+
+variable "apache_ports" {
+  description = "Map of external ports for the Apache container."
+  type        = map(number)  # Change to 'map(string)' if you prefer using strings for port numbers
+  default     = {
+    "80"  = 8081  # Example mapping: internal port 80 to external port 8081
+  }
+}
+
