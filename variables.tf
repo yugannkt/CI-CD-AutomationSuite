@@ -7,7 +7,7 @@ variable "ami_id" {
 variable "jenkins_instance_type" {
   description = "The instance type for Jenkins."
   type        = string
-  default     = "t2.micro"
+  default     = "t2.medium"
 }
 
 variable "sonarqube_instance_type" {
