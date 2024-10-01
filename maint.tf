@@ -45,7 +45,7 @@ module "SonarQube" {
 
 # Write inventory file for Ansible
 resource "local_file" "inventory" {
-  content  = "[Jenkins]\n${module.jenkins_ec2.ec2_public_ip} ansible_user=ec2-user\n\n[Sonarqube]\n${module.sonarqube_ec2.ec2_public_ip} ansible_user=ec2-user\n"
+  content  = "[Jenkins]\n${module.jenkins_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.jenkins_ec2.ec2_public_ip}\n\n[Sonarqube]\n${module.sonarqube_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.sonarqube_ec2.ec2_public_ip}\n"
   filename = "${path.module}/ansible_script/inventory.ini"
 }
 
