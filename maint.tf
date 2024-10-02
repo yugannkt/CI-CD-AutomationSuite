@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    ansible = {
-      version = "~> 1.3.0"
-      source  = "ansible/ansible"
-    }
-  }
-}
-
 provider "aws" {
   region = "us-east-1"  # Change this to your preferred region
 }
@@ -43,24 +34,45 @@ module "SonarQube" {
   ec2_public_ip    = module.sonarqube_ec2.ec2_public_ip
 }
 
-# Write inventory file for Ansible
-resource "local_file" "inventory" {
-  content  = "[Jenkins]\n${module.jenkins_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.jenkins_ec2.ec2_public_ip}\n\n[Sonarqube]\n${module.sonarqube_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.sonarqube_ec2.ec2_public_ip}\n"
+resource "local_file" "inventory_ini" {
+  content = <<EOF
+[Jenkins]
+${module.jenkins_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.jenkins_ec2.ec2_public_ip} ansible_ssh_private_key_file=/home/yugan/POC4/poc4.pem
+
+[Sonarqube]
+${module.sonarqube_ec2.ec2_public_ip} ansible_user=ubuntu public_ip=${module.sonarqube_ec2.ec2_public_ip} ansible_ssh_private_key_file=/home/yugan/POC4/poc4.pem
+EOF
+
   filename = "${path.module}/ansible_script/inventory.ini"
 }
 
-# # Run Ansible playbook for SonarQube setup
-# resource "ansible_playbook" "sonarqube_setup" {
-#   name     = "SonarQube Setup"
-#   playbook = "./ansible_script/sonarqube_setup.yml"
 
-#   args = [
-#     "-i", "${local_file.inventory.filename}",  # Use the inventory file
-#     "--extra-vars", "jenkins_public_ip=${module.jenkins_ec2.ec2_public_ip}"  # Pass Jenkins IP as extra var
-#   ]
 
-#   depends_on = [module.sonarqube_ec2]  # Ensure EC2 is created before running the playbook
-# }
+
+# Run Ansible Playbook after generating the inventory file
+resource "null_resource" "run_sonarqube_playbooks" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      bash -c "ansible-playbook -i ${path.module}/ansible_script/inventory.ini ${path.module}/ansible_script/sonarqube_setup.yml -vvv -e 'ansible_ssh_common_args=\"-o StrictHostKeyChecking=no\"'"
+    EOT
+  }
+  depends_on = [
+    local_file.inventory_ini,
+    module.SonarQube  # Ensure SonarQube instance is created before running the playbook
+  ]
+}
+resource "null_resource" "run_jenkins_playbooks" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      bash -c "ansible-playbook -i ${path.module}/ansible_script/inventory.ini ${path.module}/ansible_script/jenkins_setup.yml -vvv -e 'ansible_ssh_common_args=\"-o StrictHostKeyChecking=no\"'"
+    EOT
+  }
+  depends_on = [
+    local_file.inventory_ini,
+    module.Jenkins,  # Ensure Jenkins instance is created before running the playbook
+    null_resource.run_sonarqube_playbooks  # Ensure SonarQube playbook runs before Jenkins playbook
+  ]
+}
 
 # Output the public IPs
 output "jenkins_ec2_public_ip" {
