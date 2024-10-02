@@ -90,7 +90,7 @@
     - name: Store SonarQube credentials as a JSON file on the Ansible control machine
       delegate_to: localhost
       copy:
-        dest: "/home/yugan/sonarqube_credentials.json"
+        dest: "/home/yugan/POC4/sonarqube_credentials.json"
         content: |
           {
             "SONAR_PROJECT_KEY": "{{ sonarqube_project_key }}",
@@ -101,7 +101,7 @@
 
     - name: Load SonarQube credentials from JSON file
       set_fact:
-        sonarqube_credentials: "{{ lookup('file', '/home/yugan/sonarqube_credentials.json') | from_json }}"
+        sonarqube_credentials: "{{ lookup('file', '/home/yugan/POC4/sonarqube_credentials.json') | from_json }}"
 
     - name: Use the SonarQube project key and token
       debug:
