@@ -1,9 +1,0 @@
-#!/bin/bash
-sudo ufw allow 80/tcp
-sudo ufw allow 8080/tcp
-sudo apt update -y
-sudo apt install apache2 -y
-sudo systemctl start apache2
-sudo systemctl enable apache2
-
-
