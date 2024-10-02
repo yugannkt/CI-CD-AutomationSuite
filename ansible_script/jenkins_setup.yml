@@ -12,6 +12,8 @@
     pipeline_job_name: "ansible_new"
     job_config_xml_path: "/tmp/job-config.xml"
     jenkins_crumb_url: "{{ jenkins_url }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,%22:%22,//crumb)"
+    repo_url: "https://github.com/yugannkt/CI-CD-AutomationSuite.git"
+
   
     sonar_scanner_dir: "/opt/sonar-scanner"
     
@@ -19,7 +21,7 @@
 
     - name: Load SonarQube credentials from JSON file
       set_fact:
-        sonarqube_credentials: "{{ lookup('file', '/home/yugan/sonarqube_credentials.json') | from_json }}"
+        sonarqube_credentials: "{{ lookup('file', '/home/yugan/POC4/sonarqube_credentials.json') | from_json }}"
     
     - name: Set SonarQube project key and token
       set_fact:
@@ -93,22 +95,25 @@
       fail:
         msg: "Initial admin password file not found!"
       when: initial_password_output.stdout == ""
+
     - name: Set password variable
       set_fact:
-        password: "{{ initial_password_output.stdout }}"
+        initial_user_password: "{{ initial_password_output.stdout }}"
+
     - name: Create cookie jar
       command: mktemp
       register: cookie_jar
+      
     - name: Get Jenkins crumb
       shell: |
-        curl -u "admin:{{ password }}" --cookie-jar "{{ cookie_jar.stdout }}" "{{ jenkins_url }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,%22:%22,//crumb)"
+        curl -u "admin:{{ initial_user_password }}" --cookie-jar "{{ cookie_jar.stdout }}" "{{ jenkins_url }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,%22:%22,//crumb)"
       register: full_crumb_output
     - name: Extract only crumb
       set_fact:
         only_crumb: "{{ full_crumb_output.stdout.split(':')[1] | trim }}"
     - name: Create admin user
       shell: |
-        curl -X POST -u "admin:{{ password }}" "{{ jenkins_url }}/setupWizard/createAdminUser" \
+        curl -X POST -u "admin:{{ initial_user_password }}" "{{ jenkins_url }}/setupWizard/createAdminUser" \
           -H "Connection: keep-alive" \
           -H "Accept: application/json, text/javascript" \
           -H "X-Requested-With: XMLHttpRequest" \
@@ -143,28 +148,7 @@
       debug:
         msg: "Jenkins setup complete!"
 
-    # - name: Generate API token for the user
-    #   shell: |
-    #     full_crumb=$(curl -u "{{ username }}:{{ new_password }}" --cookie-jar "{{ cookie_jar.stdout }}" "{{ jenkins_url }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,%22:%22,//crumb)")
-    #     only_crumb=$(echo "$full_crumb" | cut -d: -f2)
-    #     curl -X POST -u "{{ username }}:{{ new_password }}" "{{ jenkins_url }}/me/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken" \
-    #       -H "Connection: keep-alive" \
-    #       -H "Accept: application/json, text/javascript, */*; q=0.01" \
-    #       -H "X-Requested-With: XMLHttpRequest" \
-    #       -H "$full_crumb" \
-    #       -H "Content-Type: application/x-www-form-urlencoded" \
-    #       --cookie "{{ cookie_jar.stdout }}" \
-    #       --data-raw 'newTokenName=ansible-token'
-    #   register: api_token_output
-    # - name: Debug raw API token output
-    #   debug:
-    #     var: api_token_output
-    # - name: Extract API token
-    #   set_fact:
-    #     api_token: "{{ api_token_output.stdout | from_json | json_query('data.tokenValue') }}"
-    # - name: Display the generated API token
-    #   debug:
-    #     msg: "Generated API token: {{ api_token }}"
+    
 
     - name: Download SonarQube Scanner
       get_url:
