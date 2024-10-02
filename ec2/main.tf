@@ -1,5 +1,5 @@
 resource "aws_security_group" "ec2_security_group" {
-  name        = "${var.instance_name}-S2G222"
+  name        = "${var.instance_name}-Sec-Grp"
   description = "Allow inbound traffic for ${var.instance_name} instance"
 
   ingress {
@@ -52,13 +52,6 @@ resource "aws_instance" "ec2_instance" {
     Name = var.instance_name
   }
 }
-
-# resource "null_resource" "install" {
-
-#   provisioner "local-exec" {
-#     command = "terraform apply -target module.${var.instance_name}"
-#   }
-# }
 
 output "ec2_public_ip" {
   description = "Public IP of the EC2 instance."
