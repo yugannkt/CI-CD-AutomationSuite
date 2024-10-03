@@ -20,6 +20,11 @@ pipeline {
         SONAR_TOKEN = '{{ sonar_token }}' // Use Jenkins credentials for security
     }
     stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/yugannkt/CI-CD-AutomationSuite.git'
+            }
+        }
         stage('SonarQube Analysis') {
             steps {
                 script {
